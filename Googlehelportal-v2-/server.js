@@ -258,7 +258,24 @@ if (process.env.NODE_ENV === 'production') {
     app.use(async (req, res, next) => {
         const url = req.originalUrl;
         try {
-            let template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
+            // Resolve which HTML file to serve for multi-page app
+            const urlPath = url.split('?')[0].split('#')[0];
+            let htmlFile = 'index.html';
+
+            // Try exact .html match first, then append .html, then index.html fallback
+            const candidates = [
+                urlPath.replace(/^\//, ''),
+                urlPath.replace(/^\//, '') + '.html',
+                urlPath.replace(/^\//, '').replace(/\/$/, '') + '/index.html',
+            ];
+            for (const candidate of candidates) {
+                if (candidate.endsWith('.html')) {
+                    const full = path.resolve(__dirname, candidate);
+                    if (fs.existsSync(full)) { htmlFile = candidate; break; }
+                }
+            }
+
+            let template = fs.readFileSync(path.resolve(__dirname, htmlFile), 'utf-8');
             template = await vite.transformIndexHtml(url, template);
             res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
         } catch (e) {
