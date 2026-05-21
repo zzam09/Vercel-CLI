@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Administration | SpaceX HQ</title>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+        }
+
+        .grid {
+            @media (max-width: 768px) { grid-template-columns: 1fr; }
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 40px;
+        }
+
+        .template-list {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .template-item {
+            padding: 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .template-item:last-child {
+            border-bottom: none;
+        }
+
+        .template-item:hover {
+            background: var(--surface-hover);
+        }
+
+        .template-item.active {
+            background: var(--surface-hover);
+            border-left: 4px solid var(--accent);
+        }
+
+        .template-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .template-id {
+            font-size: 11px;
+            color: var(--muted);
+            font-family: monospace;
+        }
+
+        .editor-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border-bright);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary { background: var(--accent); color: var(--text-inverse); }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+        .btn-outline { background: transparent; border: 1px solid var(--border-bright); color: var(--text); }
+        .btn-outline:hover { background: var(--surface-hover); }
+
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        .btn-test { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .btn-test:hover { background: var(--success); color: white; }
+
+        .test-panel {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px dashed var(--border);
+        }
+
+        .test-form {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .status-msg {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status-success { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .status-error { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px;
+            color: var(--muted);
+            text-align: center;
+        }
+    @media (max-width: 768px) {
+  .grid { grid-template-columns: 1fr; gap: 20px; }
+  .container { margin: 20px auto; }
+  .form-group [style*="grid-template-columns: 1fr 1fr"] { grid-template-columns: 1fr !important; }
+  .actions { flex-direction: column; }
+  .test-form { flex-direction: column; }
+  header { flex-direction: column; gap: 12px; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>Email Administration</h1>
+            <button class="btn-outline" onclick="addNewTemplate()">+ New Template</button>
+        </header>
+
+        <div id="status" class="status-msg"></div>
+
+        <div class="grid">
+            <aside>
+                <label>Templates</label>
+                <div id="template-list" class="template-list">
+                    <!-- Templates will be injected here -->
+                </div>
+            </aside>
+
+            <main>
+                <div id="editor-container" class="editor-card" style="display: none;">
+                    <form id="template-form">
+                        <input type="hidden" id="edit-index">
+                        
+                        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <label>Internal ID</label>
+                                <input type="text" id="edit-id" placeholder="e.g. welcome-v2" required>
+                            </div>
+                            <div>
+                                <label>Display Name</label>
+                                <input type="text" id="edit-name" placeholder="e.g. New User Welcome" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Subject Line</label>
+                            <input type="text" id="edit-subject" placeholder="e.g. Welcome to the Fleet, {name}" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Message Body</label>
+                            <textarea id="edit-message" placeholder="Write your email content here (supports markdown-like formatting in templates)"></textarea>
+                        </div>
+
+                        <div class="form-group" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <label>Button Text</label>
+                                <input type="text" id="edit-btn-text" placeholder="e.g. ACCESS PORTAL">
+                            </div>
+                            <div>
+                                <label>Button Link (URL)</label>
+                                <input type="url" id="edit-btn-url" placeholder="https://...">
+                            </div>
+                        </div>
+
+                        <div class="actions">
+                            <button type="submit" class="btn-primary">Save Changes</button>
+                            <button type="button" class="btn-danger" onclick="deleteTemplate()">Delete</button>
+                        </div>
+                    </form>
+
+                    <div class="test-panel">
+                        <label>Send Test Email</label>
+                        <div class="test-form">
+                            <div style="flex: 1;">
+                                <label style="font-size: 9px;">Target Email</label>
+                                <input type="email" id="test-email" placeholder="you@example.com">
+                            </div>
+                            <div style="flex: 1;">
+                                <label style="font-size: 9px;">Test Name</label>
+                                <input type="text" id="test-name" placeholder="John Doe">
+                            </div>
+                            <button type="button" class="btn-test" onclick="sendTestEmail()">Send Test</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="editor-empty" class="empty-state">
+                    <p>Select a template from the list to edit its content<br>or create a new one.</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let templates = [];
+        let currentIndex = -1;
+
+        async function loadTemplates() {
+            showLoading(true);
+            try {
+                const res = await fetch('/api/templates');
+                templates = await res.json();
+                renderList();
+            } catch (err) {
+                showStatus('Error loading templates', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderList() {
+            const list = document.getElementById('template-list');
+            list.innerHTML = templates.map((t, i) => `
+                <div class="template-item ${i === currentIndex ? 'active' : ''}" onclick="selectTemplate(${i})">
+                    <div class="template-name">${t.name}</div>
+                    <div class="template-id">${t.id}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectTemplate(index) {
+            currentIndex = index;
+            renderList();
+            
+            const t = templates[index];
+            document.getElementById('edit-index').value = index;
+            document.getElementById('edit-id').value = t.id;
+            document.getElementById('edit-name').value = t.name;
+            document.getElementById('edit-subject').value = t.subject;
+            document.getElementById('edit-message').value = t.message;
+            document.getElementById('edit-btn-text').value = t.buttonText;
+            document.getElementById('edit-btn-url').value = t.buttonUrl;
+
+            document.getElementById('editor-container').style.display = 'block';
+            document.getElementById('editor-empty').style.display = 'none';
+        }
+
+        function addNewTemplate() {
+            currentIndex = -1;
+            document.getElementById('template-form').reset();
+            document.getElementById('edit-index').value = -1;
+            
+            document.getElementById('editor-container').style.display = 'block';
+            document.getElementById('editor-empty').style.display = 'none';
+            renderList();
+        }
+
+        document.getElementById('template-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const index = parseInt(document.getElementById('edit-index').value);
+            
+            const template = {
+                id: document.getElementById('edit-id').value,
+                name: document.getElementById('edit-name').value,
+                subject: document.getElementById('edit-subject').value,
+                message: document.getElementById('edit-message').value,
+                buttonText: document.getElementById('edit-btn-text').value,
+                buttonUrl: document.getElementById('edit-btn-url').value
+            };
+
+            if (index === -1) {
+                templates.push(template);
+            } else {
+                templates[index] = template;
+            }
+
+            await saveTemplates();
+        };
+
+        async function saveTemplates() {
+            showLoading(true);
+            try {
+                const res = await fetch('/api/templates', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(templates)
+                });
+                if (res.ok) {
+                    showStatus('Templates saved successfully', 'success');
+                    renderList();
+                } else {
+                    showStatus('Error saving templates', 'error');
+                }
+            } catch (err) {
+                showStatus('Network error occurred', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function deleteTemplate() {
+            if (currentIndex === -1) return;
+            if (!confirm('Are you sure you want to delete this template?')) return;
+
+            templates.splice(currentIndex, 1);
+            currentIndex = -1;
+            document.getElementById('editor-container').style.display = 'none';
+            document.getElementById('editor-empty').style.display = 'flex';
+            await saveTemplates();
+        }
+
+        async function sendTestEmail() {
+            const email = document.getElementById('test-email').value;
+            const name = document.getElementById('test-name').value;
+            const templateId = document.getElementById('edit-id').value;
+
+            if (!email) return alert('Enter a test email address');
+
+            showLoading(true);
+            try {
+                const res = await fetch('/api/send-test-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ templateId, email, name })
+                });
+                if (res.ok) {
+                    showStatus('Test email sent successfully!', 'success');
+                } else {
+                    const err = await res.json();
+                    showStatus('Send failed: ' + (err.error || 'Unknown error'), 'error');
+                }
+            } catch (err) {
+                showStatus('Network error sending test', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+
+        function showStatus(msg, type) {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = `status-msg status-${type}`;
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.display = 'none';
+            }, 5000);
+        }
+
+        loadTemplates();
+    </script>
+</body>
+</html>

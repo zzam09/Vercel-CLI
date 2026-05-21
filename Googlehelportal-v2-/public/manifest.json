@@ -1,0 +1,19 @@
+{
+  "name": "SpaceX HQ",
+  "short_name": "SpaceX HQ",
+  "description": "SpaceX Member Portal — Restricted Access",
+  "start_url": "/pages/login",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
